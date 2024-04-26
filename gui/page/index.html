@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <!-- https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CSP -->
+  <title>electron-app</title>
+  <link rel="stylesheet" href="./css/index.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+  <div id="app" class="pen-mouse">
+    <h1>electron-app-vue</h1>
+    <!-- <div class="test">你好</div> -->
+  </div>
+
+  <script>
+    const { createApp, ref } = Vue
+    createApp({
+      data() {
+        return {
+          message: 'Hello Vue 3!'
+        }
+      },
+      methods: {
+
+
+        async startDetection() {
+          setInterval(async () => {
+            await ipcRenderer.send('startDetection')
+          }, 1000);
+        },
+
+        // 接收检测结果
+        async detectionResult() {
+          ipcRenderer.on('detectionResult', (event, arg) => {
+            console.log('detectionResult', arg)
+          })
+        }
+      },
+      async mounted() {
+        console.log('mounted')
+
+        // 开启屏幕检测
+        this.startDetection()
+
+        // 接收检测结果
+        this.detectionResult()
+
+
+        // 鼠标移动事件
+        let throttleTimer = null;
+        window.addEventListener('mousemove', (e) => {
+          clearTimeout(throttleTimer);
+          throttleTimer = setTimeout(() => {
+            let flag = e.target.classList.contains('pen-mouse');
+            if (flag) {
+              ipcRenderer.send("setIgnoreMouseEvents", true);
+            } else {
+              ipcRenderer.send("setIgnoreMouseEvents", false);
+            }
+          }, 1);
+        });
+      }
+    }).mount('#app')
+  </script>
+</body>
+
+<script src="./js/index.js"></script>
+
+</html>
